@@ -11,8 +11,12 @@ class RGBColor:
     b: int
 
     @property
-    def hex(self):
+    def hex(self) -> str:
         return "#%02x%02x%02x" % (self.r, self.g, self.b)
+
+    @property
+    def rgb(self) -> str:
+        return f"({self.r},{self.g},{self.b})"
 
 
 class Lamp:
@@ -78,7 +82,7 @@ class Lamp:
         color_string = (
             f"Color temp: {self.color_temp}"
             if self.color_mode == "color_temp"
-            else f"RGB: {self.color_rgb.hex}"
+            else f"RGB: {self.color_rgb.rgb}, Hex: {self.color_rgb.hex}"
         )
         return (
             f"Lamp: [ On: {self._on}, Brightness: {self.brightness}, {color_string} ]"
