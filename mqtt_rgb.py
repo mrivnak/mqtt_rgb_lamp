@@ -21,8 +21,8 @@ def on_message(client, userdata, msg):
         client.lamp.read_json(msg.payload.decode())
 
         output = client.lamp.get_json().encode('utf-8')
-        print(f"payload in: {msg.payload}")
-        print(f"payload out: {output}")
+        # print(f"payload in: {msg.payload}")
+        # print(f"payload out: {output}")
         client.publish(STATE_TOPIC, payload=output)
     
 
