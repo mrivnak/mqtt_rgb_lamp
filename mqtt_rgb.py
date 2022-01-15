@@ -17,7 +17,7 @@ def on_connect(client, userdata, flags, rc):
 def on_message(client, userdata, msg):
 
     if msg.topic == COMMAND_TOPIC:
-        print(f"{msg.topic} {msg.payload.decode()}")
+        # print(f"{msg.topic} {msg.payload.decode()}")
         client.lamp.read_json(msg.payload.decode())
 
         output = client.lamp.get_json().encode('utf-8')
@@ -26,7 +26,7 @@ def on_message(client, userdata, msg):
         client.publish(STATE_TOPIC, payload=output)
     
 
-    print(client.lamp)
+    # print(client.lamp)
 
 
 def main():

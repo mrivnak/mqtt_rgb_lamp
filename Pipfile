@@ -5,11 +5,15 @@ name = "pypi"
 
 [packages]
 paho-mqtt = "*"
-black = "*"
-gpiozero = "*"
+pigpio = "*"
+homeassistant = "*"
 
 [requires]
 python_version = "3.9"
 
 [pipenv]
 allow_prereleases = true
+
+[dev-packages]
+black = "*"
+pylint = "*"

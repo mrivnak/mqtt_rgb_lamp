@@ -1,6 +1,8 @@
+from __future__ import annotations
 import json
-from gpiozero import PWMLED
-from typing import Dict
+
+import pigpio
+import homeassistant.util.color as color_util
 from dataclasses import dataclass
 
 
@@ -18,10 +20,25 @@ class RGBColor:
     def rgb(self) -> str:
         return f"({self.r},{self.g},{self.b})"
 
+    @staticmethod
+    def from_color_temp(temp: int) -> RGBColor:
+        kelvin = color_util.color_temperature_mired_to_kelvin(temp)
+        rgb = color_util.color_temperature_to_rgb(kelvin)
+        return RGBColor(rgb[0], rgb[1], rgb[2])
+
 
 class Lamp:
     STATE_ON: str = "ON"
     STATE_OFF: str = "OFF"
+
+    PIN_R: int = 17
+    PIN_G: int = 27
+    PIN_B: int = 22
+
+    # Blue and green light is naturally more powerfull than red light so it needs to be dimmed to look balanced
+    # Additional calibration is also for the specific LEDs
+    BLUE_COMP: float = 0.3
+    GREEN_COMP: float = 0.2
 
     def __init__(self):
         self.brightness: int = 100
@@ -29,6 +46,13 @@ class Lamp:
         self.color_rgb: RGBColor = RGBColor(r=255, g=255, b=255)
         self.color_temp: int = 153
         self._on: bool = True
+
+        # GPIO Setup
+        self._pi = pigpio.pi()
+
+    def __del__(self):
+        self._pi.stop()
+        
 
     @property
     def on(self) -> str:
@@ -43,7 +67,20 @@ class Lamp:
 
     def update(self) -> None:
         # TODO: update actual hardware to match settings
-        pass
+        if self._on:
+            if self.color_mode == "rgb":
+                self._pi.set_PWM_dutycycle(self.PIN_R, int((self.color_rgb.r / 256) * self.brightness))
+                self._pi.set_PWM_dutycycle(self.PIN_G, int((self.color_rgb.g / 256) * self.brightness * self.GREEN_COMP))
+                self._pi.set_PWM_dutycycle(self.PIN_B, int((self.color_rgb.b / 256) * self.brightness * self.BLUE_COMP))
+            elif self.color_mode == "color_temp":
+                color = RGBColor.from_color_temp(self.color_temp)
+                self._pi.set_PWM_dutycycle(self.PIN_R, int((color.r / 256) * self.brightness))
+                self._pi.set_PWM_dutycycle(self.PIN_G, int((color.g / 256) * self.brightness * self.GREEN_COMP))
+                self._pi.set_PWM_dutycycle(self.PIN_B, int((color.b / 256) * self.brightness * self.BLUE_COMP))
+                # print(f"color temp as RGB: {color}")
+        else:
+            for pin in [self.PIN_R, self.PIN_G, self.PIN_B]:
+                self._pi.set_PWM_dutycycle(pin, 0)
 
     def read_json(self, json_data: str) -> None:
         data = json.loads(json_data)
